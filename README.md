@@ -1,7 +1,15 @@
 Basic Map Sample for ArcGIS Runtime Quartz Beta 1
 ====================
 
-This repository contains code for two sample apps--one for Java and one for Android--that display a map using ArcGIS Runtime Quartz Beta 1. The app demonstrates the major themes of ArcGIS Runtime Quartz that exist in the Beta 1 release.
+This repository contains code for two sample apps--one for Java and one for Android--that display a map using ArcGIS Runtime Quartz Beta 1. The app demonstrates the major themes of ArcGIS Runtime Quartz that exist in the Beta 1 release. These themes are discussed in the release notes [for Java](https://developers.arcgis.com/java/beta/guide/release-notes-java.htm) and [for Android](https://developers.arcgis.com/android/beta/guide/release-notes-java.htm) and are listed here:
+
+- Runtime common API
+- New mapping API
+- Loadable pattern
+- Centralized handling of authentication
+- Geometries and geometry builders
+
+## Build and run
 
 To run the Java application, you need the [ArcGIS Runtime SDK for Java, version Quartz Beta 1](https://developers.arcgis.com/java/beta/). The beta site directs you to join the Early Adopter community and download the SDK. Unzip the SDK and copy the `ArcGISRuntime100.0.0` directory to the `source/BasicMapQuartzBeta1_JavaSE` directory in this repository. Then compile and run the app using Ant or NetBeans. The code should work in other IDEs and build environments as well.
 
