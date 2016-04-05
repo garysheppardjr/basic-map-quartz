@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright 2015 Esri
+ * Copyright 2015-2016 Esri
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import com.esri.arcgisruntime.mapping.Basemap;
 import com.esri.arcgisruntime.mapping.Map;
 import com.esri.arcgisruntime.mapping.view.MapView;
 import com.esri.arcgisruntime.security.AuthenticationChallenge;
-import com.esri.arcgisruntime.security.AuthenticationChallengeAction;
 import com.esri.arcgisruntime.security.AuthenticationChallengeHandler;
 import com.esri.arcgisruntime.security.AuthenticationChallengeResponse;
 import com.esri.arcgisruntime.security.AuthenticationManager;
@@ -70,17 +69,13 @@ public class BasicMapQuartzActivity extends AppCompatActivity {
         layerStatusLabel = (TextView) findViewById(R.id.textView_layerStatus);
         srLabel = (TextView) findViewById(R.id.textView_spatialReference);
 
-        //Unsecured feature service
-        String featureServiceUrl = "https://services.arcgis.com/hRUr1F8lE8Jq2uJo/arcgis/rest/services/KFSD_Fire_Stations/FeatureServer/0";
-        String definitionExpression = "1 = 1";
-
         /**
          * *********************************************************************
-         * 4. Centralized handling of authentication
+         * New in Beta 1: Centralized handling of authentication
          */
         //Secured feature service
-        featureServiceUrl = "https://services1.arcgis.com/63cSRCcqLtJKDSR2/arcgis/rest/services/nhsvc_sites/FeatureServer/0";
-        definitionExpression = "Name LIKE '%Sa%'";
+        String featureServiceUrl = "https://services1.arcgis.com/63cSRCcqLtJKDSR2/arcgis/rest/services/nhsvc_sites/FeatureServer/0";
+        String definitionExpression = "Name LIKE '%Sa%'";
         AuthenticationManager.setAuthenticationChallengeHandler(new AuthenticationChallengeHandler() {
 
             @Override
@@ -92,14 +87,13 @@ public class BasicMapQuartzActivity extends AppCompatActivity {
                         credential = null;
                         Intent intent = new Intent();
                         intent.setClass(BasicMapQuartzActivity.this, LoginActivity.class);
-                        intent.putExtra(LoginActivity.EXTRA_HOSTNAME, challenge.getServiceHostname());
                         startActivityForResult(intent, REQUEST_LOGIN);
                         try {
                             loginLatch.await();
                             if (null != credential) {
-                                response = new AuthenticationChallengeResponse(AuthenticationChallengeAction.CONTINUE_WITH_CREDENTIAL, credential);
+                                response = new AuthenticationChallengeResponse(AuthenticationChallengeResponse.Action.CONTINUE_WITH_CREDENTIAL, credential);
                             } else {
-                                response = new AuthenticationChallengeResponse(AuthenticationChallengeAction.CANCEL, "No credentials entered by user");
+                                response = new AuthenticationChallengeResponse(AuthenticationChallengeResponse.Action.CANCEL, "No credentials entered by user");
                             }
                         } catch (InterruptedException ex) {
                             Log.e(BasicMapQuartzActivity.this.getClass().getSimpleName(), null, ex);
@@ -120,8 +114,8 @@ public class BasicMapQuartzActivity extends AppCompatActivity {
 
         /**
          * *********************************************************************
-         * 1. Runtime common API
-         * 2. New mapping API
+         * New in Beta 1: Runtime common API
+         * New in Beta 1: New mapping API
          */
         mapView = (MapView) findViewById(R.id.mapView);
 
@@ -135,7 +129,7 @@ public class BasicMapQuartzActivity extends AppCompatActivity {
 
         /**
          * *********************************************************************
-         * 3. Loadable pattern
+         * New in Beta 1: Loadable pattern
          */
         layerStatusLabel.setText("Layer: " + LoadStatus.NOT_LOADED);
         featureLayer.addLoadStatusChangedListener(new LoadStatusChangedListener() {
@@ -148,7 +142,7 @@ public class BasicMapQuartzActivity extends AppCompatActivity {
 
                     /**
                      * *********************************************************
-                     * 5. Geometry objects
+                     * New in Beta 1: Geometry objects
                      */
                     EnvelopeBuilder envBuilder = new EnvelopeBuilder(fullExtent);
                     double halfWidth = envBuilder.getWidth() / 2.0;
