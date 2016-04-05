@@ -79,7 +79,7 @@ public class AppFXMain extends Application {
          * 4. Centralized handling of authentication
          */
         //Secured feature service
-        featureServiceUrl = "http://services1.arcgis.com/63cSRCcqLtJKDSR2/arcgis/rest/services/nhsvc_sites/FeatureServer/0";
+        featureServiceUrl = "https://services1.arcgis.com/63cSRCcqLtJKDSR2/arcgis/rest/services/nhsvc_sites/FeatureServer/0";
         definitionExpression = "Name LIKE '%Sa%'";
         AuthenticationManager.setAuthenticationChallengeHandler(new AuthenticationChallengeHandler() {
 
