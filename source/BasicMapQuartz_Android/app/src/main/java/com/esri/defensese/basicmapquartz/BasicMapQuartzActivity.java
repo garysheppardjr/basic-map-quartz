@@ -23,6 +23,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
+import com.esri.arcgisruntime.ArcGISRuntimeEnvironment;
 import com.esri.arcgisruntime.datasource.arcgis.ArcGISFeatureTable;
 import com.esri.arcgisruntime.datasource.arcgis.ServiceFeatureTable;
 import com.esri.arcgisruntime.geometry.Envelope;
@@ -63,6 +64,8 @@ public class BasicMapQuartzActivity extends AppCompatActivity {
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ArcGISRuntimeEnvironment.setClientId(getString(R.string.client_id));
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.content_basic_map_quartz);
 
