@@ -3,6 +3,14 @@ Basic Map Sample for ArcGIS Runtime Quartz
 
 This repository contains code for two sample apps--one for Java and one for Android--that display a map using ArcGIS Runtime Quartz. The app demonstrates the major themes of ArcGIS Runtime Quartz. These themes are discussed in the release notes [for Java](https://developers.arcgis.com/java/beta/guide/release-notes-java.htm) and [for Android](https://developers.arcgis.com/android/beta/guide/release-notes-android.htm) and are listed here:
 
+Beta 2:
+- Vector tiled layers
+- Mobile map packages
+- Take layers offline
+- Offline geocoding and routing
+- Identify layers
+- Loadable features
+
 Beta 1:
 - Runtime common API
 - New mapping API
