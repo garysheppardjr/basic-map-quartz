@@ -71,7 +71,7 @@ public class BasicMapQuartzActivity extends AppCompatActivity {
         srLabel = (TextView) findViewById(R.id.textView_spatialReference);
 
         //Unsecured feature service
-        String featureServiceUrl = "http://services.arcgis.com/hRUr1F8lE8Jq2uJo/arcgis/rest/services/KFSD_Fire_Stations/FeatureServer/0";
+        String featureServiceUrl = "https://services.arcgis.com/hRUr1F8lE8Jq2uJo/arcgis/rest/services/KFSD_Fire_Stations/FeatureServer/0";
         String definitionExpression = "1 = 1";
 
         /**
@@ -79,7 +79,7 @@ public class BasicMapQuartzActivity extends AppCompatActivity {
          * 4. Centralized handling of authentication
          */
         //Secured feature service
-        featureServiceUrl = "http://services1.arcgis.com/63cSRCcqLtJKDSR2/arcgis/rest/services/nhsvc_sites/FeatureServer/0";
+        featureServiceUrl = "https://services1.arcgis.com/63cSRCcqLtJKDSR2/arcgis/rest/services/nhsvc_sites/FeatureServer/0";
         definitionExpression = "Name LIKE '%Sa%'";
         AuthenticationManager.setAuthenticationChallengeHandler(new AuthenticationChallengeHandler() {
 
