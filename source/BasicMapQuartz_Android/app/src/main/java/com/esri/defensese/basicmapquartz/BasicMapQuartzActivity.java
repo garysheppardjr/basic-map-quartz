@@ -94,7 +94,8 @@ public class BasicMapQuartzActivity extends AppCompatActivity {
             public void loadStatusChanged(LoadStatusChangedEvent evt) {
                 LoadStatus newLoadStatus = evt.getNewLoadStatus();
                 layerStatusLabel.setText("Layer: " + newLoadStatus.toString());
-                if (LoadStatus.LOADED.equals(newLoadStatus)) {
+                switch (newLoadStatus) {
+                case LOADED:
                     Envelope fullExtent = featureLayer.getFullExtent();
 
                     /**
@@ -115,6 +116,14 @@ public class BasicMapQuartzActivity extends AppCompatActivity {
                                     + ". Try doing THAT with ArcGIS Runtime 10.2.x!");
 
                     mapView.setViewpointGeometryAsync(fullExtent);
+                    break;
+
+                case FAILED_TO_LOAD:
+                    if (null != featureLayer.getLoadError() && null != featureLayer.getLoadError().getMessage()
+                            && featureLayer.getLoadError().getMessage().toLowerCase().contains("token")) {
+                        AuthenticationManager.CredentialCache.clear();
+                    }
+                    break;
                 }
             }
         });
