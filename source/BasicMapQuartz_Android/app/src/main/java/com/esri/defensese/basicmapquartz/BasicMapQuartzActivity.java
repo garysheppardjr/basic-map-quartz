@@ -15,7 +15,6 @@
  ******************************************************************************/
 package com.esri.defensese.basicmapquartz;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -35,13 +34,8 @@ import com.esri.arcgisruntime.loadable.LoadStatusChangedListener;
 import com.esri.arcgisruntime.mapping.Basemap;
 import com.esri.arcgisruntime.mapping.Map;
 import com.esri.arcgisruntime.mapping.view.MapView;
-import com.esri.arcgisruntime.security.AuthenticationChallenge;
-import com.esri.arcgisruntime.security.AuthenticationChallengeHandler;
-import com.esri.arcgisruntime.security.AuthenticationChallengeResponse;
 import com.esri.arcgisruntime.security.AuthenticationManager;
-import com.esri.arcgisruntime.security.UserCredential;
-
-import java.util.concurrent.CountDownLatch;
+import com.esri.arcgisruntime.security.DefaultAuthenticationChallengeHandler;
 
 /**
  * An app that displays a map with a feature service, demonstrating they key themes
@@ -49,15 +43,10 @@ import java.util.concurrent.CountDownLatch;
  */
 public class BasicMapQuartzActivity extends AppCompatActivity {
 
-    private static final int REQUEST_LOGIN = 1;
-
     private MapView mapView = null;
     private Map map = null;
     private TextView layerStatusLabel = null;
     private TextView srLabel = null;
-
-    private CountDownLatch loginLatch = null;
-    private UserCredential credential = null;
 
     /**
      * Creates the UI and creates and displays the map.
@@ -76,44 +65,9 @@ public class BasicMapQuartzActivity extends AppCompatActivity {
          * *********************************************************************
          * New in Beta 1: Centralized handling of authentication
          */
-        //Secured feature service
         String featureServiceUrl = "https://services1.arcgis.com/63cSRCcqLtJKDSR2/arcgis/rest/services/nhsvc_sites/FeatureServer/0";
         String definitionExpression = "Name LIKE '%Sa%'";
-        AuthenticationManager.setAuthenticationChallengeHandler(new AuthenticationChallengeHandler() {
-
-            @Override
-            public AuthenticationChallengeResponse handleChallenge(AuthenticationChallenge challenge) {
-                AuthenticationChallengeResponse response = null;
-                switch (challenge.getType()) {
-                    case USER_CREDENTIAL_CHALLENGE:
-                        loginLatch = new CountDownLatch(1);
-                        credential = null;
-                        Intent intent = new Intent();
-                        intent.setClass(BasicMapQuartzActivity.this, LoginActivity.class);
-                        startActivityForResult(intent, REQUEST_LOGIN);
-                        try {
-                            loginLatch.await();
-                            if (null != credential) {
-                                response = new AuthenticationChallengeResponse(AuthenticationChallengeResponse.Action.CONTINUE_WITH_CREDENTIAL, credential);
-                            } else {
-                                response = new AuthenticationChallengeResponse(AuthenticationChallengeResponse.Action.CANCEL, "No credentials entered by user");
-                            }
-                        } catch (InterruptedException ex) {
-                            Log.e(BasicMapQuartzActivity.this.getClass().getSimpleName(), null, ex);
-                        }
-                        break;
-
-                    case CERTIFICATE_CHALLENGE:
-                    case OAUTH_CREDENTIAL_CHALLENGE:
-                    case SELF_SIGNED_CHALLENGE:
-                    case UNKNOWN:
-                    default:
-                        //TODO notify the user that this auth type is not supported
-                        //     by this app
-                }
-                return response;
-            }
-        });
+        AuthenticationManager.setAuthenticationChallengeHandler(new DefaultAuthenticationChallengeHandler(this));
 
         /**
          * *********************************************************************
@@ -176,28 +130,6 @@ public class BasicMapQuartzActivity extends AppCompatActivity {
 
     private static String getSpatialReferenceString(Map map) {
         return (null == map.getSpatialReference() ? "null" : Integer.toString(map.getSpatialReference().getWKID()));
-    }
-
-    /**
-     * Handles the result of a started Activity.
-     * @param requestCode the request code. If it's REQUEST_LOGIN, this method creates a UserCredential
-     *                    object.
-     * @param resultCode the result code.
-     * @param data the Intent returned by the activity.
-     */
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (REQUEST_LOGIN == requestCode) {
-            credential = new UserCredential(
-                    data.getStringExtra(LoginActivity.EXTRA_USERNAME),
-                    data.getStringExtra(LoginActivity.EXTRA_PASSWORD)
-            );
-            if (null != loginLatch) {
-                loginLatch.countDown();
-            }
-        } else {
-            super.onActivityResult(requestCode, resultCode, data);
-        }
     }
 
     /**
