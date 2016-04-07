@@ -13,7 +13,8 @@
         android:id="@+id/mapView"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:layout_above="@+id/listView_identifyResults">
+        android:layout_toLeftOf="@+id/listView_identifyResults"
+        android:layout_toStartOf="@+id/listView_identifyResults">
     </com.esri.arcgisruntime.mapping.view.MapView>
     <TextView
         android:id="@+id/textView_layerStatus"
@@ -29,10 +30,12 @@
         style="@style/LabelOverMap"/>
     <ListView
         android:id="@+id/listView_identifyResults"
-        android:layout_width="match_parent"
-        android:layout_height="300dp"
-        android:layout_alignParentBottom="true"
+        android:layout_width="300dp"
+        android:layout_height="match_parent"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
         android:choiceMode="singleChoice"
+        android:background="@color/colorPrimary"
         android:visibility="gone">
     </ListView>
 </RelativeLayout>

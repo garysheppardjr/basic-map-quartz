@@ -18,11 +18,20 @@ package com.esri.defensese.basicmapquartz;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.esri.arcgisruntime.ArcGISRuntimeEnvironment;
+import com.esri.arcgisruntime.concurrent.ListenableFuture;
+import com.esri.arcgisruntime.datasource.arcgis.ArcGISFeature;
 import com.esri.arcgisruntime.datasource.arcgis.ArcGISFeatureTable;
 import com.esri.arcgisruntime.datasource.arcgis.ServiceFeatureTable;
 import com.esri.arcgisruntime.geometry.Envelope;
@@ -32,16 +41,25 @@ import com.esri.arcgisruntime.loadable.LoadStatus;
 import com.esri.arcgisruntime.loadable.LoadStatusChangedEvent;
 import com.esri.arcgisruntime.loadable.LoadStatusChangedListener;
 import com.esri.arcgisruntime.mapping.Basemap;
+import com.esri.arcgisruntime.mapping.GeoElement;
 import com.esri.arcgisruntime.mapping.Map;
+import com.esri.arcgisruntime.mapping.view.Callout;
+import com.esri.arcgisruntime.mapping.view.DefaultMapViewOnTouchListener;
+import com.esri.arcgisruntime.mapping.view.IdentifyLayerResult;
 import com.esri.arcgisruntime.mapping.view.MapView;
 import com.esri.arcgisruntime.security.AuthenticationManager;
 import com.esri.arcgisruntime.security.DefaultAuthenticationChallengeHandler;
+
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * An app that displays a map with a feature service, demonstrating they key themes
  * of ArcGIS Runtime Quartz.
  */
 public class BasicMapQuartzActivity extends AppCompatActivity {
+
+    private static final String TAG = BasicMapQuartzActivity.class.getSimpleName();
 
     private MapView mapView = null;
     private Map map = null;
@@ -79,10 +97,15 @@ public class BasicMapQuartzActivity extends AppCompatActivity {
         this.map = new Map();
         map.setBasemap(Basemap.createTopographic());
 
-        ArcGISFeatureTable featureTable = new ServiceFeatureTable(featureServiceUrl);
+        final ArcGISFeatureTable featureTable = new ServiceFeatureTable(featureServiceUrl);
         final FeatureLayer featureLayer = new FeatureLayer(featureTable);
         featureLayer.setDefinitionExpression(definitionExpression);
         map.getOperationalLayers().add(featureLayer);
+
+        Callout.Style calloutStyle = new Callout.Style(this);
+        calloutStyle.setBackgroundColor(R.color.colorPrimary);
+        calloutStyle.setBorderColor(R.color.colorPrimary);
+        mapView.getCallout().setStyle(calloutStyle);
 
         /**
          * *********************************************************************
@@ -116,6 +139,84 @@ public class BasicMapQuartzActivity extends AppCompatActivity {
                                     + ". Try doing THAT with ArcGIS Runtime 10.2.x!");
 
                     mapView.setViewpointGeometryAsync(fullExtent);
+
+                    mapView.setOnTouchListener(new DefaultMapViewOnTouchListener(getApplicationContext(), mapView) {
+
+                        @Override
+                        public boolean onSingleTapConfirmed(MotionEvent event) {
+                            /**
+                             * *********************************************************************
+                             * New in Beta 2: Identify layers
+                             */
+                            final ListenableFuture<IdentifyLayerResult> future = mapView.identifyLayerAsync(
+                                    featureLayer,
+                                    new android.graphics.Point(Math.round(event.getX()), Math.round(event.getY())),
+                                    11.0, Integer.MAX_VALUE);
+                            future.addDoneListener(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        final IdentifyLayerResult result = future.get();
+                                        final List<GeoElement> geoElementList = result.getIdentifiedElements();
+                                        if (0 < geoElementList.size()) {
+                                            ArrayAdapter<GeoElement> arrayAdapter = new ArrayAdapter<GeoElement>(getApplicationContext(), android.R.layout.simple_list_item_1, geoElementList) {
+                                                @Override
+                                                public View getView(int position, View convertView, ViewGroup parent) {
+                                                    GeoElement geoElement = geoElementList.get(position);
+                                                    if (null == convertView) {
+                                                        convertView = LayoutInflater.from(getContext()).inflate(R.layout.item_geo_element, parent, false);
+                                                    }
+                                                    String listText;
+                                                    if (geoElement instanceof ArcGISFeature) {
+                                                        ArcGISFeature feature = (ArcGISFeature) geoElement;
+                                                        String displayFieldName = feature.getFeatureTable().getLayerInfo().getDisplayFieldName();
+                                                        listText = feature.getAttributes().get(displayFieldName).toString();
+                                                    } else {
+                                                        listText = result.getLayerContent().getName() + " " + geoElement.hashCode();
+                                                    }
+                                                    ((TextView) convertView.findViewById(R.id.textView_title)).setText(listText);
+                                                    return convertView;
+                                                }
+                                            };
+                                            ListView listView = (ListView) findViewById(R.id.listView_identifyResults);
+                                            listView.setAdapter(arrayAdapter);
+                                            listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                                                @Override
+                                                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                                                    GeoElement geoElement = geoElementList.get(position);
+                                                    String titleText;
+                                                    if (geoElement instanceof ArcGISFeature) {
+                                                        ArcGISFeature feature = (ArcGISFeature) geoElement;
+                                                        String displayFieldName = feature.getFeatureTable().getLayerInfo().getDisplayFieldName();
+                                                        titleText = feature.getAttributes().get(displayFieldName).toString();
+                                                    } else {
+                                                        titleText = result.getLayerContent().getName() + " " + geoElement.hashCode();
+                                                    }
+
+                                                    ViewGroup featureCallout = (ViewGroup) LayoutInflater.from(getApplicationContext()).inflate(R.layout.feature_callout, parent, false);
+                                                    for (String key : geoElement.getAttributes().keySet()) {
+                                                        View featureCalloutRow = LayoutInflater.from(getApplicationContext()).inflate(R.layout.feature_callout_row, parent, false);
+                                                        ((TextView) featureCalloutRow.findViewById(R.id.textView_key)).setText(key);
+                                                        ((TextView) featureCalloutRow.findViewById(R.id.textView_value)).setText(geoElement.getAttributes().get(key).toString());
+                                                        featureCallout.addView(featureCalloutRow);
+                                                    }
+                                                    ((TextView) featureCallout.findViewById(R.id.textView_title)).setText(titleText);
+
+                                                    mapView.getCallout().show(featureCallout, geoElement.getGeometry().getExtent().getCenter());
+                                                }
+                                            });
+                                            findViewById(R.id.listView_identifyResults).setVisibility(View.VISIBLE);
+                                            listView.performItemClick(null, 0, 0);
+                                        }
+                                    } catch (InterruptedException | ExecutionException e) {
+                                        Log.d(TAG, "Could not get identify result", e);
+                                    }
+                                }
+                            });
+                            return true;
+                        }
+                    });
+
                     break;
 
                 case FAILED_TO_LOAD:
