@@ -50,6 +50,8 @@ import com.esri.arcgisruntime.mapping.view.MapView;
 import com.esri.arcgisruntime.security.AuthenticationManager;
 import com.esri.arcgisruntime.security.DefaultAuthenticationChallengeHandler;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -182,27 +184,28 @@ public class BasicMapQuartzActivity extends AppCompatActivity {
                                             listView.setAdapter(arrayAdapter);
                                             listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                                                 @Override
-                                                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                                                public void onItemClick(final AdapterView<?> parent, View view, int position, long id) {
                                                     GeoElement geoElement = geoElementList.get(position);
-                                                    String titleText;
                                                     if (geoElement instanceof ArcGISFeature) {
-                                                        ArcGISFeature feature = (ArcGISFeature) geoElement;
-                                                        String displayFieldName = feature.getFeatureTable().getLayerInfo().getDisplayFieldName();
-                                                        titleText = feature.getAttributes().get(displayFieldName).toString();
+                                                        final ArcGISFeature feature = (ArcGISFeature) geoElement;
+                                                        /**
+                                                         * *********************************************************************
+                                                         * New in Beta 2: Loadable features
+                                                         */
+                                                        feature.addDoneLoadingListener(new Runnable() {
+                                                            @Override
+                                                            public void run() {
+                                                                feature.removeDoneLoadingListener(this);
+                                                                String displayFieldName = feature.getFeatureTable().getLayerInfo().getDisplayFieldName();
+                                                                String titleText = feature.getAttributes().get(displayFieldName).toString();
+                                                                showGeoElementCallout(feature, titleText, parent);
+                                                            }
+                                                        });
+                                                        feature.loadAsync();
                                                     } else {
-                                                        titleText = result.getLayerContent().getName() + " " + geoElement.hashCode();
+                                                        String titleText = result.getLayerContent().getName() + " " + geoElement.hashCode();
+                                                        showGeoElementCallout(geoElement, titleText, parent);
                                                     }
-
-                                                    ViewGroup featureCallout = (ViewGroup) LayoutInflater.from(getApplicationContext()).inflate(R.layout.feature_callout, parent, false);
-                                                    for (String key : geoElement.getAttributes().keySet()) {
-                                                        View featureCalloutRow = LayoutInflater.from(getApplicationContext()).inflate(R.layout.feature_callout_row, parent, false);
-                                                        ((TextView) featureCalloutRow.findViewById(R.id.textView_key)).setText(key);
-                                                        ((TextView) featureCalloutRow.findViewById(R.id.textView_value)).setText(geoElement.getAttributes().get(key).toString());
-                                                        featureCallout.addView(featureCalloutRow);
-                                                    }
-                                                    ((TextView) featureCallout.findViewById(R.id.textView_title)).setText(titleText);
-
-                                                    mapView.getCallout().show(featureCallout, geoElement.getGeometry().getExtent().getCenter());
                                                 }
                                             });
                                             findViewById(R.id.listView_identifyResults).setVisibility(View.VISIBLE);
@@ -236,6 +239,28 @@ public class BasicMapQuartzActivity extends AppCompatActivity {
         });
 
         mapView.setMap(map);
+    }
+
+    private void showGeoElementCallout(GeoElement geoElement, String titleText, ViewGroup parent) {
+        ViewGroup featureCallout = (ViewGroup) LayoutInflater.from(getApplicationContext()).inflate(R.layout.feature_callout, parent, false);
+        for (String key : geoElement.getAttributes().keySet()) {
+            View featureCalloutRow = LayoutInflater.from(getApplicationContext()).inflate(R.layout.feature_callout_row, parent, false);
+            ((TextView) featureCalloutRow.findViewById(R.id.textView_key)).setText(key);
+            Object value = geoElement.getAttributes().get(key);
+            if (null != value) {
+                String valueString;
+                if (value instanceof Calendar) {
+                    valueString = SimpleDateFormat.getDateInstance().format(((Calendar) value).getTime());
+                } else {
+                    valueString = value.toString();
+                }
+                ((TextView) featureCalloutRow.findViewById(R.id.textView_value)).setText(valueString);
+            }
+            featureCallout.addView(featureCalloutRow);
+        }
+        ((TextView) featureCallout.findViewById(R.id.textView_title)).setText(titleText);
+
+        mapView.getCallout().show(featureCallout, geoElement.getGeometry().getExtent().getCenter());
     }
 
     private static String getSpatialReferenceString(Map map) {
