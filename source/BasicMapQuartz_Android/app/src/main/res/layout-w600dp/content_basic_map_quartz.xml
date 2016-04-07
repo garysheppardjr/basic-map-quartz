@@ -9,10 +9,19 @@
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context=".BasicMapQuartzActivity">
 
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
     <com.esri.arcgisruntime.mapping.view.MapView
         android:id="@+id/mapView"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
+        android:layout_below="@id/toolbar"
         android:layout_toLeftOf="@+id/listView_identifyResults"
         android:layout_toStartOf="@+id/listView_identifyResults">
     </com.esri.arcgisruntime.mapping.view.MapView>
@@ -32,8 +41,10 @@
         android:id="@+id/listView_identifyResults"
         android:layout_width="300dp"
         android:layout_height="match_parent"
+        android:layout_below="@id/toolbar"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
+        android:elevation="2dp"
         android:choiceMode="singleChoice"
         android:background="@color/colorPrimary"
         android:visibility="gone">

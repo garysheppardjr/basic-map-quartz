@@ -17,6 +17,7 @@ package com.esri.defensese.basicmapquartz;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -77,6 +78,8 @@ public class BasicMapQuartzActivity extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.content_basic_map_quartz);
+
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
 
         layerStatusLabel = (TextView) findViewById(R.id.textView_layerStatus);
         srLabel = (TextView) findViewById(R.id.textView_spatialReference);
