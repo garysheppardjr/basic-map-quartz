@@ -3,4 +3,5 @@
     <string name="action_settings">Settings</string>
     <string name="title_activity_login">Sign in</string>
     <string name="client_id">TODO insert client ID</string>
+    <string name="download_feature_layer">Download Feature Layer</string>
 </resources>
