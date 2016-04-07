@@ -29,13 +29,13 @@
         android:id="@+id/textView_layerStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
+        android:layout_alignTop="@+id/mapView"
         style="@style/LabelOverMap"/>
     <TextView
         android:id="@+id/textView_spatialReference"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
+        android:layout_alignBottom="@+id/mapView"
         style="@style/LabelOverMap"/>
     <ListView
         android:id="@+id/listView_identifyResults"
