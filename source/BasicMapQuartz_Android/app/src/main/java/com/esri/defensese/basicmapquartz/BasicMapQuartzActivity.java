@@ -330,8 +330,38 @@ public class BasicMapQuartzActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        switch (id) {
+        case R.id.action_settings:
+            return true;
+
+        case R.id.action_download_features:
+            /**
+             * *********************************************************************
+             * New in Beta 2: Take layers offline
+             */
+            final GeodatabaseSyncTask gdbSyncTask = new GeodatabaseSyncTask(getApplicationContext(), featureTable.getUrl());
+            gdbSyncTask.setCredential(featureTable.getCredential());
+            final ListenableFuture<GenerateGeodatabaseParameters> gdbParamFuture = gdbSyncTask.createDefaultGenerateGeodatabaseParametersAsync();
+            gdbParamFuture.addDoneListener(new Runnable() {
+                @Override
+                public void run() {
+                    gdbParamFuture.removeDoneListener(this);
+                    try {
+                        GenerateGeodatabaseParameters params = gdbParamFuture.get();
+                        String gdbAbsolutePath = new File(getFilesDir(), "outgdb.geodatabase").getAbsolutePath();
+                        final Job generateJob = gdbSyncTask.generateGeodatabaseAsync(params, gdbAbsolutePath);
+                        generateJob.addJobDoneListener(new Runnable() {
+                            @Override
+                            public void run() {
+                                Log.i(TAG, "Finished generate job: " + generateJob.getStatus(), generateJob.getError());
+                            }
+                        });
+                    } catch (InterruptedException | ExecutionException e) {
+                        Log.e(TAG, null, e);
+                    }
+                }
+            });
+
             return true;
         }
 
