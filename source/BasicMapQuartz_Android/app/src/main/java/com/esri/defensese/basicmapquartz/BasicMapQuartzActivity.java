@@ -31,9 +31,9 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.esri.arcgisruntime.ArcGISRuntimeEnvironment;
+import com.esri.arcgisruntime.concurrent.Job;
 import com.esri.arcgisruntime.concurrent.ListenableFuture;
 import com.esri.arcgisruntime.datasource.arcgis.ArcGISFeature;
-import com.esri.arcgisruntime.datasource.arcgis.ArcGISFeatureTable;
 import com.esri.arcgisruntime.datasource.arcgis.ServiceFeatureTable;
 import com.esri.arcgisruntime.geometry.Envelope;
 import com.esri.arcgisruntime.geometry.EnvelopeBuilder;
@@ -50,7 +50,10 @@ import com.esri.arcgisruntime.mapping.view.IdentifyLayerResult;
 import com.esri.arcgisruntime.mapping.view.MapView;
 import com.esri.arcgisruntime.security.AuthenticationManager;
 import com.esri.arcgisruntime.security.DefaultAuthenticationChallengeHandler;
+import com.esri.arcgisruntime.tasks.geodatabase.GenerateGeodatabaseParameters;
+import com.esri.arcgisruntime.tasks.geodatabase.GeodatabaseSyncTask;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
@@ -66,6 +69,7 @@ public class BasicMapQuartzActivity extends AppCompatActivity {
 
     private MapView mapView = null;
     private Map map = null;
+    private ServiceFeatureTable featureTable;
     private TextView layerStatusLabel = null;
     private TextView srLabel = null;
 
@@ -102,7 +106,7 @@ public class BasicMapQuartzActivity extends AppCompatActivity {
         this.map = new Map();
         map.setBasemap(Basemap.createTopographic());
 
-        final ArcGISFeatureTable featureTable = new ServiceFeatureTable(featureServiceUrl);
+        featureTable = new ServiceFeatureTable(featureServiceUrl);
         final FeatureLayer featureLayer = new FeatureLayer(featureTable);
         featureLayer.setDefinitionExpression(definitionExpression);
         map.getOperationalLayers().add(featureLayer);
@@ -171,12 +175,16 @@ public class BasicMapQuartzActivity extends AppCompatActivity {
                                                     if (null == convertView) {
                                                         convertView = LayoutInflater.from(getContext()).inflate(R.layout.item_geo_element, parent, false);
                                                     }
-                                                    String listText;
+                                                    String listText = null;
                                                     if (geoElement instanceof ArcGISFeature) {
                                                         ArcGISFeature feature = (ArcGISFeature) geoElement;
                                                         String displayFieldName = feature.getFeatureTable().getLayerInfo().getDisplayFieldName();
-                                                        listText = feature.getAttributes().get(displayFieldName).toString();
-                                                    } else {
+                                                        Object displayFieldValue = feature.getAttributes().get(displayFieldName);
+                                                        if (null != displayFieldValue) {
+                                                            listText = displayFieldValue.toString();
+                                                        }
+                                                    }
+                                                    if (null == listText) {
                                                         listText = result.getLayerContent().getName() + " " + geoElement.hashCode();
                                                     }
                                                     ((TextView) convertView.findViewById(R.id.textView_title)).setText(listText);
@@ -200,7 +208,13 @@ public class BasicMapQuartzActivity extends AppCompatActivity {
                                                             public void run() {
                                                                 feature.removeDoneLoadingListener(this);
                                                                 String displayFieldName = feature.getFeatureTable().getLayerInfo().getDisplayFieldName();
-                                                                String titleText = feature.getAttributes().get(displayFieldName).toString();
+                                                                Object displayFieldValue = feature.getAttributes().get(displayFieldName);
+                                                                String titleText;
+                                                                if (null != displayFieldValue) {
+                                                                    titleText = displayFieldValue.toString();
+                                                                } else {
+                                                                    titleText = result.getLayerContent().getName() + " " + feature.hashCode();
+                                                                }
                                                                 showGeoElementCallout(feature, titleText, parent);
                                                             }
                                                         });
