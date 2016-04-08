@@ -16,6 +16,7 @@
 package com.esri.defensese.basicmapquartz;
 
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -31,6 +32,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.esri.arcgisruntime.ArcGISRuntimeEnvironment;
+import com.esri.arcgisruntime.arcgisservices.ArcGISFeatureServiceInfo;
 import com.esri.arcgisruntime.concurrent.Job;
 import com.esri.arcgisruntime.concurrent.ListenableFuture;
 import com.esri.arcgisruntime.datasource.arcgis.ArcGISFeature;
@@ -330,8 +332,51 @@ public class BasicMapQuartzActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        switch (id) {
+        case R.id.action_settings:
+            return true;
+
+        case R.id.action_download_features:
+            /**
+             * *********************************************************************
+             * New in Beta 2: Take layers offline
+             */
+            final ArcGISFeatureServiceInfo featureServiceInfo = new ArcGISFeatureServiceInfo(featureTable.getUrl());
+            featureServiceInfo.setCredential(featureTable.getCredential());
+            featureServiceInfo.addDoneLoadingListener(new Runnable() {
+                @Override
+                public void run() {
+                    featureServiceInfo.removeDoneLoadingListener(this);
+                    final GeodatabaseSyncTask gdbSyncTask = new GeodatabaseSyncTask(getApplicationContext(), featureServiceInfo);
+                    final ListenableFuture<GenerateGeodatabaseParameters> gdbParamFuture = gdbSyncTask.createDefaultGenerateGeodatabaseParametersAsync();
+                    gdbParamFuture.addDoneListener(new Runnable() {
+                        @Override
+                        public void run() {
+                            gdbParamFuture.removeDoneListener(this);
+                            try {
+                                GenerateGeodatabaseParameters params = gdbParamFuture.get();
+                                final String gdbAbsolutePath = new File(getFilesDir(), "outgdb.geodatabase").getAbsolutePath();
+                                final Job generateJob = gdbSyncTask.generateGeodatabaseAsync(params, gdbAbsolutePath);
+                                generateJob.addJobDoneListener(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        generateJob.removeJobDoneListener(this);
+                                        String msg = "Downloaded layer to " + gdbAbsolutePath;
+                                        Log.i(TAG, msg, generateJob.getError());
+                                        Snackbar.make(mapView, msg, Snackbar.LENGTH_INDEFINITE);
+                                    }
+                                });
+                            } catch (InterruptedException | ExecutionException e) {
+                                String msg = "Could not download layer: " + e.getMessage();
+                                Log.e(TAG, msg, e);
+                                Snackbar.make(mapView, msg, Snackbar.LENGTH_INDEFINITE).show();
+                            }
+                        }
+                    });
+                }
+            });
+            featureServiceInfo.loadAsync();
+
             return true;
         }
 
